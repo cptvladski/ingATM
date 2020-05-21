@@ -1,9 +1,10 @@
 
-```
-ATM demo project
-```
+
+# ATM demo project
+
 
 endpoints: 
+```
   /withdraw:
     method: GET
     params: accountNumber, PIN, amount
@@ -12,7 +13,9 @@ endpoints:
             wrong PIN(401)
             missing params(422)
             invalid amount(422)
+```
   
+```
   /deposit:
     method: PUT
     params: accountNumber, PIN, list of bills
@@ -22,7 +25,8 @@ endpoints:
             amount too low(422)
             fake bill(eg 3 dollar bill)(422)
             empty bill list(422)
-    
+```
+```
   /consult:
     method: GET
     params: accountNumber, PIN
@@ -30,7 +34,9 @@ endpoints:
     errors: invalid account(401)
             wrong PIN(401)
             missing param(422)
+```
     
+```
 logging:
   wrong PIN
   fake bill
@@ -38,7 +44,9 @@ logging:
   amount left in ATM after withdrawal
   less than X money left in ATM
   accountNumber consulted
+```
   
+```
 tests:
   /withdraw, /deposit, /consult result in error if invalid accountNumber/ wrong PIN (403)
   missing parameters result in error
@@ -49,4 +57,5 @@ tests:
   E2E:
     list of bills gotten from /withdraw adds up to initial amount
     amount before deposit + amount deposited adds up to amount after deposit
+```
   
