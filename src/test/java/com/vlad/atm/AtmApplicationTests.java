@@ -14,20 +14,20 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 @SpringBootTest
-class AtmApplicationTests {
+class BillUtilTests {
 
-	private final Logger logger = LoggerFactory.getLogger(AtmApplicationTests.class);
+	private final Logger logger = LoggerFactory.getLogger(BillUtilTests.class);
 	@Autowired
 	private BillUtil billUtil;
-	@Test
-	void contextLoads() {
-	}
 
 	@Test
 	void billUtil_splits_correctly() throws Exception {
-		int amount = ((int) Math.random() * 100 + 50);
+		int amount = (int)(Math.random() * 100 + 50);
 		logger.debug("splitting" + amount);
-		assertThat(billUtil.split(amount).orElseThrow(() -> new Exception()).stream().reduce(0,Integer::sum))
+		assertThat(billUtil.split(amount)
+				.orElseThrow(() -> new Exception())
+				.stream()
+				.reduce(0,Integer::sum))
 				.isEqualTo(amount);
 	}
 
