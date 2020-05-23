@@ -48,7 +48,7 @@ logging:
   
 ```
 tests:
-  /withdraw, /deposit, /consult result in error if invalid accountNumber/ wrong PIN (403)
+  /withdraw, /deposit, /consult result in error if invalid accountNumber/ wrong PIN (401)
   missing parameters result in error
   empty lists cannot be used for /deposit
   fake bills on /deposit result in error

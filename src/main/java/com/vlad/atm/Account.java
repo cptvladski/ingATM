@@ -8,13 +8,14 @@ import javax.persistence.Id;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
 @ToString
 @Entity
+@Setter
+@Getter
 public class Account {
     @Id
     private int accountNumber;
     private String PIN;
     private int amount;
+
 }
