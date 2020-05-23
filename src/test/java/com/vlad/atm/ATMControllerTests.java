@@ -131,4 +131,14 @@ public class ATMControllerTests {
                 .andExpect(status().isUnprocessableEntity());
     }
 
+    @Test
+    public void consult_returns_422_when_invalid_PIN() throws Exception{
+        when(accountRepository.findByAccountNumber(1234)).thenReturn(new Account(1234,"0000",100));
+        when(billProcessingTool.split(anyInt())).thenReturn(Optional.of(new ArrayList<>()));
+        mockMvc.perform(get("/consult")
+                .param("accountNumber","1234")
+                .param("PIN","00a"))
+                .andExpect(status().isUnprocessableEntity());
+    }
+
 }

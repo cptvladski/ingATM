@@ -57,19 +57,21 @@ public class ATMController {
         if(account.getAmount() < amountWithdrawn)
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Insufficient funds");
 
-        Optional<List<Integer>> bills = billProcessingTool.split(amountWithdrawn);
-        if(!bills.isPresent())
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Invalid Amount");
+        return billProcessingTool.split(amountWithdrawn)
+                .map(bills -> {
+                    if(amountLeft.addAndGet(-amountWithdrawn) < 1000)
+                        logger.warn("Less than 1000 money left in ATM");
+                    logger.info(amountLeft + " money left in ATM");
 
-        if(amountLeft.addAndGet(-amountWithdrawn) < 1000)
-            logger.warn("Less than 1000 money left in ATM");
-        logger.info(amountLeft + " money left in ATM");
+                    account.setAmount(account.getAmount() - amountWithdrawn);
+                    accountRepository.save(account);
+                    return ResponseEntity.ok(bills.toString());
+                })
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Invalid Amount"));
 
-        account.setAmount(account.getAmount() - amountWithdrawn);
-        accountRepository.save(account);
 
 
-        return ResponseEntity.ok(bills.get());
+
     }
 
     @PutMapping(path = "/deposit",consumes = "application/json")
@@ -100,10 +102,18 @@ public class ATMController {
     @GetMapping(path = "/consult")
     public ResponseEntity<?> consult
             (
-                    @RequestParam String accountNumber,
-                    @RequestParam String PIN
+                    @RequestParam int accountNumber,
+                    @RequestParam @Pattern(regexp = "[0-9]{4}") String PIN
             ){
-        return ResponseEntity.ok().build();
+        Account account = accountRepository.findByAccountNumber(accountNumber);
+        if(account == null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No such account number");
+        }
+        if (!PIN.equals((account.getPIN()))) {
+            logger.warn("Invalid access attempt to account number " + accountNumber);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong PIN");
+        }
+        return ResponseEntity.ok(account.getAmount());
     }
 
 
