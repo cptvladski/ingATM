@@ -9,12 +9,13 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
-public class BillUtil {
+public class BillProcessingTool {
     private static final List<Integer> acceptedBills = Arrays.asList(new Integer[]{100,50,20,10,5,2,1});
 
     public Optional<List<Integer>> split(int amount){
-        if(amount < 50)
+        if(amount < 50) {
             return Optional.empty();
+        }
         List<Integer> split = new ArrayList<>();
         for (Integer bill:acceptedBills){
             while (amount >= bill){

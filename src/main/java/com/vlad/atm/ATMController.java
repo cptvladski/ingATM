@@ -6,21 +6,27 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.DiscriminatorColumn;
+import javax.validation.ConstraintViolationException;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Pattern;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @AllArgsConstructor
 @RestController
+@Validated
 public class ATMController {
     private final Logger logger = LoggerFactory.getLogger(ATMController.class);
     private final AtomicInteger amountLeft = new AtomicInteger(10000);
 
     @Autowired
-    private final BillUtil billUtil;
+    private final BillProcessingTool billProcessingTool;
     @Autowired
     private final AccountRepository accountRepository;
 
@@ -33,8 +39,8 @@ public class ATMController {
     public ResponseEntity<?> withdraw
             (
                     @RequestParam int accountNumber,
-                    @RequestParam String PIN,
-                    @RequestParam int amountWithdrawn
+                    @RequestParam @Pattern(regexp = "[0-9]{4}")String PIN,
+                    @RequestParam @Min(0) int amountWithdrawn
             ){
         Account account = accountRepository.findByAccountNumber(accountNumber);
         if(account == null){
@@ -48,7 +54,7 @@ public class ATMController {
         if(account.getAmount() < amountWithdrawn)
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Insufficient funds");
 
-        Optional<List<Integer>> bills = billUtil.split(amountWithdrawn);
+        Optional<List<Integer>> bills = billProcessingTool.split(amountWithdrawn);
         if(!bills.isPresent())
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Invalid Amount");
 
@@ -78,5 +84,14 @@ public class ATMController {
                     @RequestParam String PIN
             ){
         return ResponseEntity.ok().build();
+    }
+
+
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    @ResponseBody
+    String handleConstraintViolationException(ConstraintViolationException e) {
+        return "not valid due to validation error: " + e.getMessage();
     }
 }
