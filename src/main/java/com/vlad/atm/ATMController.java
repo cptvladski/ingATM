@@ -11,31 +11,39 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.DiscriminatorColumn;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @AllArgsConstructor
 @RestController
 @Validated
 public class ATMController {
+    private static class UnauthorizedException extends Exception{}
+
     private final Logger logger = LoggerFactory.getLogger(ATMController.class);
     private final AtomicInteger amountLeft = new AtomicInteger(10000);
 
     @Autowired
     private final BillProcessingTool billProcessingTool;
+
     @Autowired
     private final AccountRepository accountRepository;
 
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<?> handleMissingParams(MissingServletRequestParameterException ex){
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("missing parameter " + ex.getParameterType() + " " + ex.getParameterName());
+
+    private Account authorizeAccount(int accountNumber, String PIN) throws UnauthorizedException{
+        Account account = accountRepository.findByAccountNumber(accountNumber);
+        if(account == null){
+            throw new UnauthorizedException();
+        }
+        if (!PIN.equals((account.getPIN()))) {
+            logger.warn("Invalid access attempt to account number " + accountNumber);
+            throw new UnauthorizedException();
+        }
+        return account;
+
     }
 
     @GetMapping(path = "/withdraw")
@@ -44,16 +52,9 @@ public class ATMController {
                     @RequestParam int accountNumber,
                     @RequestParam @Pattern(regexp = "[0-9]{4}")String PIN,
                     @RequestParam @Min(0) int amountWithdrawn
-            ){
-        Account account = accountRepository.findByAccountNumber(accountNumber);
-        if(account == null){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No such account number");
-        }
-        if (!PIN.equals((account.getPIN()))) {
-            logger.warn("Invalid access attempt to account number " + accountNumber);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong PIN");
-        }
+            ) throws UnauthorizedException {
 
+        Account account = this.authorizeAccount(accountNumber,PIN);
         if(account.getAmount() < amountWithdrawn)
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Insufficient funds");
 
@@ -67,7 +68,7 @@ public class ATMController {
                     accountRepository.save(account);
                     return ResponseEntity.ok(bills.toString());
                 })
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Invalid Amount"));
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Invalid Amount (too low)"));
 
 
 
@@ -78,15 +79,8 @@ public class ATMController {
     public ResponseEntity<?> deposit
             (
                     @RequestBody @Valid DepositTransaction depositTransaction
-            ){
-        Account account = accountRepository.findByAccountNumber(depositTransaction.getAccountNumber());
-        if(account == null){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No such account number");
-        }
-        if (!depositTransaction.getPin().equals((account.getPIN()))) {
-            logger.warn("Invalid access attempt to account number " + depositTransaction.getAccountNumber());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong PIN");
-        }
+            ) throws UnauthorizedException {
+        Account account = this.authorizeAccount(depositTransaction.getAccountNumber(),depositTransaction.getPin());
         return billProcessingTool.checkBills(depositTransaction.getBills())
                 .map(amountDeposited -> {
                     account.setAmount(account.getAmount() + amountDeposited);
@@ -105,15 +99,8 @@ public class ATMController {
             (
                     @RequestParam int accountNumber,
                     @RequestParam @Pattern(regexp = "[0-9]{4}") String PIN
-            ){
-        Account account = accountRepository.findByAccountNumber(accountNumber);
-        if(account == null){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No such account number");
-        }
-        if (!PIN.equals((account.getPIN()))) {
-            logger.warn("Invalid access attempt to account number " + accountNumber);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong PIN");
-        }
+            ) throws UnauthorizedException {
+        Account account = this.authorizeAccount(accountNumber,PIN);
         return ResponseEntity.ok(account.getAmount());
     }
 
@@ -131,5 +118,19 @@ public class ATMController {
     @ResponseBody
     String handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         return "not valid due to validation error: " + e.getMessage();
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseBody
+    String handleUnauthorizedException(UnauthorizedException e) {
+        return "Unauthorized";
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<?> handleMissingParams(MissingServletRequestParameterException ex){
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(
+                "missing parameter " + ex.getParameterType() + " " + ex.getParameterName()
+        );
     }
 }
