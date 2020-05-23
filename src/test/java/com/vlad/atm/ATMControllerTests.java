@@ -102,8 +102,8 @@ public class ATMControllerTests {
     }
 
     @Test
-    public void deposit_will_not_accept_invalid_input() throws Exception{
-        when(accountRepository.findByAccountNumber(1234)).thenReturn(new Account(1234,"1111",100));
+    public void deposit_will_not_accept_invalid_input() throws Exception {
+        when(accountRepository.findByAccountNumber(1234)).thenReturn(new Account(1234, "1111", 100));
         when(billProcessingTool.checkBills(any())).thenReturn(Optional.of(40));
         mockMvc.perform(put("/deposit")
                 .contentType("application/json")
@@ -130,6 +130,20 @@ public class ATMControllerTests {
 
                 .andExpect(status().isUnprocessableEntity());
     }
+    @Test
+    public void deposit_will_not_accept_empty_list() throws Exception{
+        when(accountRepository.findByAccountNumber(1234)).thenReturn(new Account(1234, "1111", 100));
+        when(billProcessingTool.checkBills(any())).thenReturn(Optional.of(40));
+        mockMvc.perform(put("/deposit")
+                .contentType("application/json")
+                .content("{" +
+                        "\"accountNumber\":\"1234\"," +
+                        "\"pin\":\"0000\"," +
+                        "\"bills\":[]" +
+                        "}"))
+
+                .andExpect(status().isUnprocessableEntity());
+    }
 
     @Test
     public void consult_returns_422_when_invalid_PIN() throws Exception{
@@ -140,5 +154,27 @@ public class ATMControllerTests {
                 .param("PIN","00a"))
                 .andExpect(status().isUnprocessableEntity());
     }
+
+    @Test
+    public void consult_returns_401_when_account_not_found() throws Exception{
+        when(accountRepository.findByAccountNumber(1234)).thenReturn(new Account(1234,"0000",100));
+        when(billProcessingTool.split(anyInt())).thenReturn(Optional.of(new ArrayList<>()));
+        mockMvc.perform(get("/consult")
+                .param("accountNumber","123")
+                .param("PIN","0000"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void consult_returns_401_when_wrong_PIN() throws Exception{
+        when(accountRepository.findByAccountNumber(1234)).thenReturn(new Account(1234,"0000",100));
+        when(billProcessingTool.split(anyInt())).thenReturn(Optional.of(new ArrayList<>()));
+        mockMvc.perform(get("/consult")
+                .param("accountNumber","1234")
+                .param("PIN","0001"))
+                .andExpect(status().isUnauthorized());
+    }
+
+
 
 }

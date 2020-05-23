@@ -90,6 +90,7 @@ public class ATMController {
         return billProcessingTool.checkBills(depositTransaction.getBills())
                 .map(amountDeposited -> {
                     account.setAmount(account.getAmount() + amountDeposited);
+                    accountRepository.save(account);
                     amountLeft.addAndGet(amountDeposited);
                     return ResponseEntity.ok("" + amountDeposited);
                 })
