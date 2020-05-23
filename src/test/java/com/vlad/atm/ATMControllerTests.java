@@ -4,14 +4,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @WebMvcTest(ATMController.class)
 public class ATMControllerTests {
@@ -97,4 +100,35 @@ public class ATMControllerTests {
                 .param("amountWithdrawn","63"))
                 .andExpect(status().isUnprocessableEntity());
     }
+
+    @Test
+    public void deposit_will_not_accept_invalid_input() throws Exception{
+        when(accountRepository.findByAccountNumber(1234)).thenReturn(new Account(1234,"1111",100));
+        when(billProcessingTool.checkBills(any())).thenReturn(Optional.of(40));
+        mockMvc.perform(put("/deposit")
+                .contentType("application/json")
+                .content("{" +
+                        "\"accountNumber\":\"1234\"," +
+                        "\"pin\":\"asdf\"," +
+                        "\"bills\":[1,1,1,1]" +
+                        "}"))
+                .andExpect(status().isUnprocessableEntity());
+        mockMvc.perform(put("/deposit")
+                .contentType("application/json")
+                .content("{" +
+                        "\"accountNumber\":\"1234\"," +
+                        "\"pin\":\"0000\"," +
+                        "\"bills\":null" +
+                        "}"))
+                .andExpect(status().isUnprocessableEntity());
+        mockMvc.perform(put("/deposit")
+                .contentType("application/json")
+                .content("{" +
+                        "\"accountNumber\":\"1234\"," +
+                        "\"pin\":\"0000\"" +
+                        "}"))
+
+                .andExpect(status().isUnprocessableEntity());
+    }
+
 }

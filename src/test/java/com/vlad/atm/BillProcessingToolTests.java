@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
@@ -39,7 +40,7 @@ class BillProcessingToolTests {
 	void billUtil_will_not_check_fake_bills(){
 		List<Integer> bills = Arrays.asList(new Integer[]{1, 2, 5, 10, 20, 100, 7});
 		Collections.shuffle(bills);
-		assertThat(billProcessingTool.checkBills(bills)).isEqualTo(false);
+		assertThat(billProcessingTool.checkBills(bills)).isEqualTo(Optional.empty());
 	}
 
 }

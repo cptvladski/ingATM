@@ -7,12 +7,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.DiscriminatorColumn;
 import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.List;
 import java.util.Optional;
@@ -69,12 +72,29 @@ public class ATMController {
         return ResponseEntity.ok(bills.get());
     }
 
-    @PutMapping(path = "/deposit")
+    @PutMapping(path = "/deposit",consumes = "application/json")
     public ResponseEntity<?> deposit
             (
-                    @RequestBody DepositTransaction depositTransaction
+                    @RequestBody @Valid DepositTransaction depositTransaction
             ){
-        return ResponseEntity.ok().build();
+        Account account = accountRepository.findByAccountNumber(depositTransaction.getAccountNumber());
+        if(account == null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No such account number");
+        }
+        if (!depositTransaction.getPin().equals((account.getPIN()))) {
+            logger.warn("Invalid access attempt to account number " + depositTransaction.getAccountNumber());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong PIN");
+        }
+        return billProcessingTool.checkBills(depositTransaction.getBills())
+                .map(amountDeposited -> {
+                    account.setAmount(account.getAmount() + amountDeposited);
+                    amountLeft.addAndGet(amountDeposited);
+                    return ResponseEntity.ok("" + amountDeposited);
+                })
+                .orElseGet(() -> {
+                    logger.warn("Fake bill detected on deposit by accountNumber" + depositTransaction.getAccountNumber());
+                    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Invalid bills");
+                });
     }
 
     @GetMapping(path = "/consult")
@@ -92,6 +112,13 @@ public class ATMController {
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     @ResponseBody
     String handleConstraintViolationException(ConstraintViolationException e) {
+        return "not valid due to validation error: " + e.getMessage();
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    @ResponseBody
+    String handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         return "not valid due to validation error: " + e.getMessage();
     }
 }

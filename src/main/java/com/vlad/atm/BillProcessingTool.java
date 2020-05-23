@@ -25,8 +25,13 @@ public class BillProcessingTool {
         }
         return  Optional.of(split);
     }
-    public boolean checkBills(List<Integer> bills){
+    public Optional<Integer> checkBills(List<Integer> bills){
         List<Integer> badBills = bills.stream().filter(integer -> !acceptedBills.contains(integer)).collect(Collectors.toList());
-        return badBills.size() == 0;
+//        return badBills.size() == 0;
+        if(badBills.size() != 0)
+            return Optional.empty();
+        return Optional.of(
+                bills.stream().reduce(0,Integer::sum)
+        );
     }
 }
