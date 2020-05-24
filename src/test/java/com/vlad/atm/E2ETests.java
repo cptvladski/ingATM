@@ -1,19 +1,24 @@
 package com.vlad.atm;
 
+import com.vlad.atm.data.Account;
+import com.vlad.atm.data.AccountRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@AutoConfigureRestDocs(outputDir = "target/snippets")
 public class E2ETests {
 
     @Autowired
@@ -31,8 +36,7 @@ public class E2ETests {
                         "\"accountNumber\":\"1234\"," +
                         "\"pin\":\"0000\"," +
                         "\"bills\":[1,1,1,7]" +
-                        "}"))
-                .andExpect(status().isUnprocessableEntity());
+                        "}"));
     }
 
     @Test
@@ -47,7 +51,8 @@ public class E2ETests {
         .andExpect(jsonPath("$",hasSize(3)))
         .andExpect(jsonPath("$[0]",is(50)))
         .andExpect(jsonPath("$[1]",is(2)))
-        .andExpect(jsonPath("$[2]",is(1)));
+        .andExpect(jsonPath("$[2]",is(1)))
+        .andDo(document("withdraw"));
     }
 
     @Test
@@ -60,12 +65,14 @@ public class E2ETests {
                         "\"pin\":\"0000\"," +
                         "\"bills\":[1,1,1,1]" +
                         "}"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andDo(document("deposit"));;
         mockMvc.perform(get("/consult")
                 .param("accountNumber","1234")
                 .param("PIN","0000"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("104"));
+                .andExpect(content().string("104"))
+        .andDo(document("consult"));
     }
 
     @Test

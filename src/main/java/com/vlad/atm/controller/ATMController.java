@@ -1,5 +1,9 @@
-package com.vlad.atm;
+package com.vlad.atm.controller;
 
+import com.vlad.atm.util.BillProcessingTool;
+import com.vlad.atm.data.Account;
+import com.vlad.atm.data.AccountRepository;
+import com.vlad.atm.data.DepositTransaction;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

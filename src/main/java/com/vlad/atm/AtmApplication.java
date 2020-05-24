@@ -1,5 +1,7 @@
 package com.vlad.atm;
 
+import com.vlad.atm.data.Account;
+import com.vlad.atm.data.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

@@ -1,0 +1,45 @@
+=ATM Demo
+== Withdraw
+[source,bash]
+----
+$ curl 'http://localhost:8080/withdraw?accountNumber=1234&PIN=0000&amountWithdrawn=53' -i -X GET
+----
+
+[source,http,options="nowrap"]
+----
+HTTP/1.1 200 OK
+Content-Type: text/plain;charset=UTF-8
+Content-Length: 10
+
+[50, 2, 1]
+----
+
+== Deposit
+[source,bash]
+----
+$ curl 'http://localhost:8080/deposit' -i -X PUT \
+    -H 'Content-Type: application/json;charset=UTF-8' \
+    -d '{"accountNumber":"1234","pin":"0000","bills":[1,1,1,1]}'
+----
+[source,http,options="nowrap"]
+----
+HTTP/1.1 200 OK
+Content-Type: text/plain;charset=UTF-8
+Content-Length: 1
+
+4
+----
+
+== Consult
+[source,bash]
+----
+$ curl 'http://localhost:8080/consult?accountNumber=1234&PIN=0000' -i -X GET
+----
+[source,http,options="nowrap"]
+----
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 3
+
+104
+----

@@ -1,4 +1,4 @@
-package com.vlad.atm;
+package com.vlad.atm.util;
 
 import org.springframework.stereotype.Component;
 

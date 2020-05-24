@@ -1,7 +1,12 @@
 package com.vlad.atm;
 
+import com.vlad.atm.controller.ATMController;
+import com.vlad.atm.data.Account;
+import com.vlad.atm.data.AccountRepository;
+import com.vlad.atm.util.BillProcessingTool;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -15,6 +20,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+
 @WebMvcTest(ATMController.class)
 public class ATMControllerTests {
     @Autowired

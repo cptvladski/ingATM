@@ -1,4 +1,4 @@
-package com.vlad.atm;
+package com.vlad.atm.data;
 
 import lombok.*;
 
