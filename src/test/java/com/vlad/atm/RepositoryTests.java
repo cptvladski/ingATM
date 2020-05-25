@@ -18,7 +18,7 @@ class RepositoryTests {
 
     @Test
     @DatabaseSetup("createAccount.xml")
-    void find_by_accunt_number_works_correctly() {
+    void find_by_account_number_works_correctly() {
         Account account = accountRepository.findByAccountNumber(1234);
         assertThat(account).isNotNull();
     }

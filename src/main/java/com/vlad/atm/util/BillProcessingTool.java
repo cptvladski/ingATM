@@ -27,7 +27,6 @@ public class BillProcessingTool {
     }
     public Optional<Integer> checkBills(List<Integer> bills){
         List<Integer> badBills = bills.stream().filter(integer -> !acceptedBills.contains(integer)).collect(Collectors.toList());
-//        return badBills.size() == 0;
         if(badBills.size() != 0)
             return Optional.empty();
         return Optional.of(

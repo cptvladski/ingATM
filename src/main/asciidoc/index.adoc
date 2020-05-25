@@ -15,6 +15,7 @@ Content-Length: 10
 ----
 
 == Deposit
+Accepted bills are 100,50,20,10,5,2,1
 [source,bash]
 ----
 $ curl 'http://localhost:8080/deposit' -i -X PUT \

@@ -64,6 +64,8 @@ public class ATMController {
 
         return billProcessingTool.split(amountWithdrawn)
                 .map(bills -> {
+                    if(amountLeft.get() - amountWithdrawn < 0)
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Not enough money left in ATM");
                     if(amountLeft.addAndGet(-amountWithdrawn) < 1000)
                         logger.warn("Less than 1000 money left in ATM");
                     logger.info(amountLeft + " money left in ATM");

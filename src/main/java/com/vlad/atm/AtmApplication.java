@@ -19,6 +19,6 @@ public class AtmApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		accountRepository.save(new Account(1234,"0000",100));
+		accountRepository.save(new Account(1234,"0000",1000));
 	}
 }

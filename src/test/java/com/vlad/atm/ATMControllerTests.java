@@ -181,6 +181,16 @@ public class ATMControllerTests {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    public void withdraw_returns_500_when_not_enough_money_in_ATM() throws Exception{
+        when(accountRepository.findByAccountNumber(1234)).thenReturn(new Account(1234,"0000",100000));
+        when(billProcessingTool.split(anyInt())).thenReturn(Optional.of(new ArrayList<>()));
+        mockMvc.perform(get("/withdraw")
+                .param("accountNumber","1234")
+                .param("PIN","0000")
+                .param("amountWithdrawn","90000"))
+                .andExpect(status().isInternalServerError());
+    }
 
 
 }
